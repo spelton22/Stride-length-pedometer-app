@@ -1,5 +1,6 @@
 import SwiftUI
 import AudioToolbox
+import CoreMotion
 
 struct CalibrationView: View {
     @ObservedObject var stepManager: StepManager
@@ -12,11 +13,15 @@ struct CalibrationView: View {
     @State private var calibrationStarted = false
     @State private var previousStepCount: Int = 0
 
+    private let pedometer = CMPedometer()
+    @State private var distanceWalked: Double = 0.0
+
     var body: some View {
         VStack(spacing: 30) {
             Text("Step Calibration")
                 .font(.largeTitle)
                 .bold()
+            
 
             if showResult {
                 Text("Calibration Complete!")
@@ -45,7 +50,8 @@ struct CalibrationView: View {
                     .foregroundColor(.white)
                     .cornerRadius(10)
                 }
-            } else {
+            }
+            else {
                 Text("Please walk \(targetStepCount) steps.")
                     .font(.title3)
 
@@ -67,11 +73,14 @@ struct CalibrationView: View {
             Spacer()
         }
         .padding()
-        .onChange(of: stepManager.stepCount) {
-            // Compare the old value (previousStepCount) with the new value
-            if calibrationStarted && stepManager.stepCount >= targetStepCount && previousStepCount < targetStepCount {
-                finishCalibration()
+        .onChange(of: stepTracker.stepCount) {
+            let newStepCount = stepTracker.stepCount
+            // Check if the step count has reached the target and update `showResult`
+            if calibrationStarted && newStepCount >= targetStepCount && previousStepCount < targetStepCount {
+                finishCalibration()  // This will trigger the state change
             }
+
+            previousStepCount = newStepCount
         }
     }
 
@@ -79,27 +88,41 @@ struct CalibrationView: View {
         calibrationStarted = true
         stepTracker.reset()  // Reset stepTracker before starting calibration
         stepTracker.startTracking()
+
+        // Start tracking distance using the CMPedometer
+        pedometer.startUpdates(from: Date()) { data, error in
+            guard let data = data, error == nil else { return }
+            distanceWalked = data.distance?.doubleValue ?? 0.0
+        }
     }
 
     private func finishCalibration() {
+        // Stop both step tracking and distance tracking
+        showResult = true
         stepTracker.stopTracking()
+        pedometer.stopUpdates()
 
-        // Simulate average step length = total distance / step count
-        // Let's assume user walks 7 meters over 10 steps
-        let simulatedDistance = 7.0
-        averageStepLength = simulatedDistance / Double(targetStepCount)
+        // Calculate average step length using the actual distance walked
+        if stepTracker.stepCount > 0 {
+            averageStepLength = distanceWalked / Double(stepTracker.stepCount)
+        }
+
+        // Update the step manager with the calculated step length
         stepManager.targetStepLength = Float(averageStepLength)
+        stepTracker.targetStepLength = Float(averageStepLength)
 
         // Vibrate to alert user
-        AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        //AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+        stepManager.triggerWarning()
 
-        showResult = true
+        //showResult = true
     }
 
     private func redoCalibration() {
         stepTracker.reset()  // Reset stats before retrying
         calibrationStarted = false
         showResult = false
+        distanceWalked = 0.0
     }
 }
 

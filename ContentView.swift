@@ -12,24 +12,24 @@ struct ContentView: View {
         _stepTracker = StateObject(wrappedValue: StepTracker(stepManager: manager))
     }
 
-    @State private var targetLengthInput = "0.7"
+    @State private var targetLengthInput = 0.0
     @State private var isTracking = false
     @State private var finalStepCount: Int = 0
+    @State private var finalStepLength2: Float = 0.0
     @State private var finalStepLength: Float = 0.0
     @State private var finalWalkingSpeed: Double = 0.0
 
     var body: some View {
         NavigationStack {
-            Text("Stride Length Pedometer")
+            Text("Stride Length Tracking")
                 .font(.title)
                 .foregroundColor(.white)
-                //.padding(.bottom)
+                .padding(.bottom)
             VStack {
                 NavigationLink("Calibrate Step Length") {
                     CalibrationView(stepManager: stepManager, stepTracker: stepTracker)
                 }
                 .padding()
-                //.font(.title)
                 .background(Color.orange)
                 .foregroundColor(.white)
                 .cornerRadius(10)
@@ -51,24 +51,24 @@ struct ContentView: View {
                         .padding(.bottom)
                 }
 
-                Text("Target Step Length (m)")
+                Text("Target Step Length (m): \(String(format: "%.4f m", stepManager.targetStepLength))")
                     .font(.headline)
-                TextField("Enter step length", text: $targetLengthInput)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
-                    .keyboardType(.decimalPad)
-                    .onSubmit {
-                        if let target = Float(targetLengthInput) {
-                            stepManager.targetStepLength = target
-                            stepTracker.targetStepLength = target
-                        }
-                    }
+//                TextField("Enter step length", text: $targetLengthInput)
+//                    .textFieldStyle(RoundedBorderTextFieldStyle())
+//                    .padding()
+//                    .keyboardType(.decimalPad)
+//                    .onSubmit {
+//                        if let target = Float(targetLengthInput) {
+//                            stepManager.targetStepLength = target
+//                            stepTracker.targetStepLength = target
+//                        }
+//                    }
 
                 Button("Start") {
-                    if let target = Float(targetLengthInput) {
-                        stepManager.targetStepLength = target
-                        stepTracker.targetStepLength = target
-                    }
+//                    if let target = Float(targetLengthInput) {
+//                        stepManager.targetStepLength = target
+//                        stepTracker.targetStepLength = target
+//                    }
                     isTracking = true
                 }
                 .font(.largeTitle)
@@ -88,6 +88,7 @@ struct ContentView: View {
                             self.finalStepLength = stepTracker.averageStrideLength
                             self.finalWalkingSpeed = Double(stepTracker.averageWalkingSpeed)
                             self.isTracking = false
+                            self.finalStepLength2 = stepTracker.averageStepLength2
                         }
                     )
                 }

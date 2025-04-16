@@ -16,11 +16,74 @@ class StepTracker: ObservableObject {
     @Published var stepOutlierCount: Int = 0
     @Published var speedOutlierCount: Int = 0
     @Published var showOutlierWarning = false
-
+    @Published var accel_x: Double = 0.0
+    @Published var accel_y: Double = 0.0
+    @Published var accel_z: Double = 0.0
+    
     var targetStepLength: Float = 0.7
+    
+    //new calculation
+    private var motionManager = CMMotionManager()
+    private let queue = OperationQueue()
+    
+    @Published var stepCount2: Int = 0
+    @Published var lastStepLength2: Float = 0.0
+    @Published var averageStepLength2: Float = 0.0
+    
+    private var accelerationHistory: [Float] = []
+    private var lastStepTime: TimeInterval = 0
+    private var strideLengths2: [Float] = []
 
     init(stepManager: StepManager) {
         self.stepManager = stepManager
+        startUpdates()
+    }
+    
+    //new func
+    func startUpdates() {
+        guard motionManager.isAccelerometerAvailable else { return }
+        motionManager.accelerometerUpdateInterval = 1.0 / 50.0 // 50 Hz
+        
+        motionManager.startAccelerometerUpdates(to: queue) { [weak self] data, error in
+            guard let self = self, let data = data else { return }
+
+            // Using Z-axis (vertical acceleration)
+            let z = data.acceleration.z
+            DispatchQueue.main.async {
+                self.processAcceleration(Float(z), timestamp: data.timestamp)
+                self.accel_x = data.acceleration.x
+                self.accel_y = data.acceleration.y
+                self.accel_z = data.acceleration.z
+            }
+        }
+    }
+    
+    private func processAcceleration(_ z: Float, timestamp: TimeInterval) {
+        accelerationHistory.append(z)
+        if accelerationHistory.count > 25 {
+            accelerationHistory.removeFirst()
+        }
+        
+        // Simple peak detection
+        if accelerationHistory.count >= 3 {
+            let a = accelerationHistory[accelerationHistory.count - 3]
+            let b = accelerationHistory[accelerationHistory.count - 2]
+            let c = accelerationHistory[accelerationHistory.count - 1]
+            
+            if b > a && b > c && b > 0.9 { // Peak threshold
+                let timeSinceLastStep = timestamp - lastStepTime
+                if timeSinceLastStep > 0.3 { // Debounce: ~max 3 steps/sec
+                    stepCount2 += 1
+                    lastStepTime = timestamp
+                    
+                    // Estimate step length (very rough!)
+                    let stride = 0.5 + (timeSinceLastStep * 1.2) // Tune this!
+                    lastStepLength2 = Float(stride)
+                    strideLengths2.append(Float(stride))
+                    averageStepLength2 = Float(strideLengths2.reduce(0, +) / Float(strideLengths2.count))
+                }
+            }
+        }
     }
     
     func reset() {
@@ -35,6 +98,14 @@ class StepTracker: ObservableObject {
         
         stepOutlierCount = 0
         speedOutlierCount = 0
+        
+        //new
+        stepCount2 = 0
+        lastStepLength2 = 0
+        averageStepLength2 = 0
+        accelerationHistory.removeAll()
+        strideLengths2.removeAll()
+        lastStepTime = 0
         
     }
 
@@ -87,11 +158,16 @@ class StepTracker: ObservableObject {
         let last10StepOutliers = stepLengths.filter { stepManager.checkForStepOutliers(stepLength: $0) }.count
         let last10SpeedOutliers = walkingSpeeds.filter { stepManager.checkForSpeedOutliers(speed: $0) }.count
 
-        if last10StepOutliers >= 5 || last10SpeedOutliers >= 5 {
+        if last10StepOutliers >= 3 || last10SpeedOutliers >= 5 {
             print("⚠️ Warning: Too many inconsistent steps or speed variations!")
             stepManager.triggerWarning()
             stepOutlierCount = 0  // Reset counter after buzzing
             speedOutlierCount = 0
+        }
+        
+        let difference = abs(targetStepLength - averageStrideLength)
+        if difference > 0.15 {
+            stepManager.triggerWarning()
         }
 
         // Update averages
