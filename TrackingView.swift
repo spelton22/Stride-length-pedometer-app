@@ -3,6 +3,7 @@ import SwiftUI
 struct TrackingView: View {
     @ObservedObject var stepTracker: StepTracker
     @ObservedObject var stepAnalyzer: StepAnalyzer
+    //@StateObject var stepTracker = StepTracker(stepManager: StepManager())
     //@StateObject private var motion = StepTracker
     @State private var isWalking = false
 
@@ -26,22 +27,26 @@ struct TrackingView: View {
                 .font(.headline)
 
             Text("Total Steps: \(stepTracker.stepCount)")
-            Text("Last Stride Length: \(String(format: "%.2f", stepTracker.lastStepLength)) m")
+            Text("New Total Steps: \(stepTracker.totalSteps)")
+            //Text("Last Stride Length: \(String(format: "%.2f", stepTracker.lastStepLength)) m")
             Text("10-Step Avg Stride Length: \(String(format: "%.2f", stepTracker.averageStrideLength)) m")
-            Text("Last Walking Speed: \(String(format: "%.2f", stepTracker.lastWalkingSpeed)) m/s")
+            //Text("Last Walking Speed: \(String(format: "%.2f", stepTracker.lastWalkingSpeed)) m/s")
             Text("10-Step Avg Walking Speed: \(String(format: "%.2f", stepTracker.averageWalkingSpeed)) m/s")
             Text("Step Outlier Count: \(stepTracker.stepOutlierCount)")
             Text("Speed Outlier Count: \(stepTracker.speedOutlierCount)")
             
-            Text("accelerometer x: \(stepTracker.accel_x)")
-            Text("accelerometer y: \(stepTracker.accel_y)")
-            Text("accelerometer z: \(stepTracker.accel_z)")
+//            Text("accelerometer x: \(String(format: "%.2f",stepTracker.accel_x))")
+//            Text("accelerometer y: \(String(format: "%.2f",stepTracker.accel_y))")
+//            Text("accelerometer z: \(String(format: "%.2f",stepTracker.accel_z))")
+            
             
             Text("NEW CALCULATION")
             Text("ACCEL Steps: \(stepTracker.stepCount2)")
             Text(String(format: "Last Stride: %.2f m", stepTracker.lastStepLength2))
             Text(String(format: "Average Stride: %.2f m", stepTracker.averageStepLength2))
             
+            Text("strideLengthRaw: \(String(format: "%.2f",stepTracker.averageStrideLengthRaw))")
+            Text("strideLengthEmpirical: \(String(format: "%.2f",stepTracker.averageStrideLengthEmpirical))")
 
             if !isWalking {
                 Button("Start Walk") {

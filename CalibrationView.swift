@@ -9,13 +9,16 @@ struct CalibrationView: View {
 
     @State private var showResult = false
     @State private var averageStepLength: Double = 0.0
+    @State private var averageSpeed: Double = 0.0
+    
     @State private var targetStepCount = 10
     @State private var calibrationStarted = false
     @State private var previousStepCount: Int = 0
 
     private let pedometer = CMPedometer()
     @State private var distanceWalked: Double = 0.0
-
+    @State private var totalTime: TimeInterval = 0.0
+    
     var body: some View {
         VStack(spacing: 30) {
             Text("Step Calibration")
@@ -28,6 +31,10 @@ struct CalibrationView: View {
                     .font(.title2)
 
                 Text("Target Step Length: \(String(format: "%.2f", averageStepLength)) meters")
+                    .font(.title3)
+                    .padding()
+                
+                Text("Average Speed: \(String(format: "%.2f", averageSpeed)) m/s")
                     .font(.title3)
                     .padding()
 
@@ -89,10 +96,18 @@ struct CalibrationView: View {
         stepTracker.reset()  // Reset stepTracker before starting calibration
         stepTracker.startTracking()
 
+        let startTime = Date()
         // Start tracking distance using the CMPedometer
-        pedometer.startUpdates(from: Date()) { data, error in
+        pedometer.startUpdates(from: startTime) { data, error in
             guard let data = data, error == nil else { return }
+            
             distanceWalked = data.distance?.doubleValue ?? 0.0
+            totalTime = Date().timeIntervalSince(startTime) // Track the total time
+            
+            // Calculate average speed
+            if totalTime > 0 {
+                averageSpeed = distanceWalked / totalTime // in meters per second
+            }
         }
     }
 
@@ -110,6 +125,10 @@ struct CalibrationView: View {
         // Update the step manager with the calculated step length
         stepManager.targetStepLength = Float(averageStepLength)
         stepTracker.targetStepLength = Float(averageStepLength)
+        stepManager.speedThreshold = Float(averageSpeed)
+
+        // Call calibrateEmpiricalK to adjust the empirical constant based on the new step length
+        stepTracker.calibrateEmpiricalK()
 
         // Vibrate to alert user
         //AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
@@ -123,6 +142,7 @@ struct CalibrationView: View {
         calibrationStarted = false
         showResult = false
         distanceWalked = 0.0
+        totalTime = 0.0
     }
 }
 

@@ -6,6 +6,7 @@ class StepAnalyzer: ObservableObject {
     private var timer: Timer?
     private let stepManager: StepManager
 
+
     @Published var stepLengths: [Float] = []
     @Published var lastStepLength: Float = 0.0
     @Published var average: Float = 0.0
