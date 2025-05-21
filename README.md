@@ -15,31 +15,20 @@ The StepTracker class uses CoreMotion to detect steps and calculate stride lengt
 Here is a list of all the function and their uses:
 
   startTracking() function initializes motion and pedometer updates, records the start time, and begins collecting accelerometer and gyroscope data to detect steps and calculate stride metrics. 
-  
   stopTracking() function stops all ongoing motion updates and resets step-related counters and lists, effectively halting tracking and clearing session data.
-
   reset() clears all step-related data without stopping the sensors. Useful for restarting a session while keeping the system running.
-
   startUpdates() is called when the user starts their walk and it begins collecting motion data from the accelerometer and gyroscope, preparing the system to detect steps in real time.
-  
   processAcceleration() processes incoming accelerometer data to identify peaks that may correspond to steps, while filtering noise and tracking time between peaks.
-  
   addStepData() records each detected step’s stride length and speed, updating the history used to compute moving averages and detect outliers.
-  
   calculateStepLength() calculates the step length using either the peak acceleration method or a raw sensor fusion method, depending on the configuration
 
 The following functions are used in a second way to calculate the user's stride length. While they are not used in the output of the app, they provide an additional way to obtain the users stride length using the raw accelerometer and gyroscope data. These calculations were originally used to find the most accurate stride length calculation. 
 
   registerStep() is called whenever a step is detected. It calculates and stores stride length, walking speed, and duration between steps using both raw sensor fusion and peak acceleration methods. It also handles outlier detection and vibration feedback if thresholds are exceeded
-  
   calculateAverages() computes the moving average of stride length and walking speed over the most recent steps to provide real-time trend analysis
-  
   calculateStrideLengthRawSensorFusion() estimates stride length using angular velocity data from the gyroscope and the time between steps, offering an alternative to the peak-based method.
-  
   registerStepWithPeakAcceleration() finalizes a step when using the peak acceleration method by calculating the stride length and logging it with a timestamp.
-  
   updatePeakAcceleration() tracks the maximum acceleration value between detected steps to aid in estimating stride length with the peak method.
-  
   calibrateEmpiricalK() is used to calibrate the constant used in the empirical stride length formula, enabling personalized accuracy based on known stride measurements.
 
   Location Manager
