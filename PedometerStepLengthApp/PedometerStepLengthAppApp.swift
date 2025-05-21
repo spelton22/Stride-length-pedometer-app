@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct PedometerStepLengthAppApp: App {
+struct PedometerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
