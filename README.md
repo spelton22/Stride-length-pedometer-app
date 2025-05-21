@@ -1,5 +1,7 @@
 Utilities: 
+
   Step Analyzer
+  
 Step Analyzer is no longer used but offers another equation and way of calculating the user's stride length. There are three functions, startAnalyzing(), stopAnalyzing(), and addStepLength(_ length: Float). The function startAnalyzing() contains the calculation for the user's stride length and calls addStepLength() to add the stride length to the array of all the stride lengths. The function stopAnalyzing(), stops the device's motion updates, which would be used when the user stops their walk. Lastly, the function addStepLength(_ length: Float), which is called at the end of startAnalyzing(), adds the input stride length to the array of all the stride lengths. It then calculates the average step length with a moving window of values. 
 
   Step Manager
